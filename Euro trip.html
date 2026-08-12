@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Becky + Sam's Europa Extravaganza</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Special+Elite&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
+<style>
+  :root { --paper:#FAF6ED; --ink:#2E2A24; --ink-soft:#6b6355; --accent:#B5472B; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin:0; height:100%;
+    background:#E4DECE;
+    font-family:'Special Elite', 'Courier New', monospace;
+    color:var(--ink);
+  }
+  body { display:flex; flex-direction:column; }
+
+  .masthead {
+    text-align:center; padding:14px 10px 8px; background:#E4DECE;
+    position:relative;
+    border-bottom:1px dashed #b8ae98;
+  }
+  .masthead::before, .masthead::after {
+    content:"";
+    position:absolute; top:0; bottom:0; width:14px;
+    background:
+      radial-gradient(circle at center, #161311 5px, transparent 5.5px) repeat-y;
+    background-size: 14px 16px;
+    opacity:0.08;
+  }
+  .masthead::before { left:0; }
+  .masthead::after { right:0; }
+  .masthead h0 {
+    display:block;
+    font-family:'Playfair Display', serif; font-weight:700; font-style:italic;
+    font-size:19px; color:var(--ink); letter-spacing:0.3px;
+  }
+  .masthead .sub {
+    display:block; font-size:9.5px; letter-spacing:2px; color:var(--ink-soft);
+    text-transform:uppercase; margin-top:2px;
+  }
+  .route-line {
+    font-family:'Special Elite', monospace;
+    font-size:11px; letter-spacing:1px; color:var(--ink-soft);
+    margin-top:8px;
+  }
+  .tabs {
+    display:flex; overflow-x:auto; gap:6px;
+    padding:10px 10px 0; background:#E4DECE;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab {
+    flex:0 0 auto;
+    font-family:'Special Elite', monospace;
+    font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    padding:9px 12px;
+    border:1.5px solid var(--ink);
+    border-bottom:none;
+    background:#EFE9DA;
+    color:var(--ink-soft);
+    border-radius:6px 6px 0 0;
+  }
+  .tab.active { background:var(--paper); color:var(--accent); border-color:var(--accent); }
+
+  .card {
+    flex:1; overflow-y:auto;
+    background:var(--paper);
+    border-top:1.5px solid var(--accent);
+    padding:16px 14px 90px;
+    position:relative;
+  }
+  .stamp-badge {
+    position:absolute; top:14px; right:14px;
+    border:2px dashed var(--accent); border-radius:50%;
+    width:56px; height:56px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transform:rotate(8deg);
+    color:var(--accent);
+    text-align:center;
+    line-height:1.1;
+  }
+  .stamp-badge .flag { font-size:15px; }
+  .stamp-badge .code {
+    font-family:'Special Elite', monospace; font-size:9px; letter-spacing:1px; margin-top:1px;
+  }
+  .eyebrow { font-size:10.5px; letter-spacing:2.5px; color:var(--ink-soft); text-transform:uppercase; max-width:78%; }
+  h1 {
+    font-family:'Playfair Display', serif;
+    font-size:32px; margin:2px 0 2px; color:var(--accent);
+  }
+  .route { font-size:11.5px; color:var(--ink-soft); margin-bottom:14px; display:block; }
+
+  .grid {
+    display:grid; gap:5px;
+  }
+  .cell {
+    background:#fff; border:1px solid var(--accent);
+    min-height:70px; padding:5px;
+    font-size:10px; line-height:1.25;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    border-radius:4px;
+    position:relative;
+    user-select:none;
+  }
+  .cell.free {
+    background:#e9e2d0;
+    border-style:dashed;
+    color:transparent;
+  }
+  .cell.free .lock { color:#a89f8c; font-size:15px; font-family:'Special Elite',monospace; }
+  .cell.free.won { background:var(--accent); border-color:var(--accent); }
+  .cell.free.won .lock { color:var(--paper); font-size:19px; }
+  .cell.checked:not(.free) {
+    background:var(--accent); color:var(--paper);
+    font-weight:bold;
+  }
+  .cell.checked:not(.free)::after {
+    content:"✓";
+    position:absolute; top:2px; right:4px;
+    font-family:'Playfair Display', serif; font-size:12px;
+  }
+  .cell.win:not(.free) { box-shadow: 0 0 0 2px var(--ink) inset; }
+
+  .prize {
+    display:none;
+    margin-top:14px; padding:12px 14px;
+    background:var(--accent); color:var(--paper);
+    border-radius:6px;
+    text-align:center;
+  }
+  .prize.show { display:block; }
+  .prize .prize-title {
+    font-family:'Playfair Display', serif; font-weight:700; font-style:italic;
+    font-size:15px; letter-spacing:0.3px;
+  }
+  .prize .prize-text {
+    font-size:11px; margin-top:5px; line-height:1.4;
+  }
+
+  .footer {
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--paper); border-top:1px solid var(--accent);
+    padding:8px 14px; font-size:10.5px; color:var(--ink-soft);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .reset-btn {
+    font-family:'Special Elite', monospace; font-size:10px;
+    background:none; border:1px solid var(--ink-soft); color:var(--ink-soft);
+    padding:5px 9px; border-radius:5px;
+  }
+
+  .profile-switch {
+    display:flex; justify-content:center; gap:8px;
+    padding:8px 10px 2px; background:#E4DECE;
+  }
+  .profile-btn {
+    flex:1; max-width:150px;
+    font-family:'Special Elite', monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    padding:7px 10px;
+    border:1.5px solid var(--ink-soft);
+    background:#EFE9DA; color:var(--ink-soft);
+    border-radius:16px;
+  }
+  .profile-btn.active.becky { background:#C8102E; border-color:#C8102E; color:#fff; }
+  .profile-btn.active.sam { background:#012169; border-color:#012169; color:#fff; }
+  .bingo-banner {
+    display:none; text-align:center;
+    background:#EFE9DA; border:1px dashed var(--accent);
+    border-radius:6px; padding:8px 10px; margin:10px 0 4px;
+  }
+  .bingo-banner.show { display:block; }
+  .bingo-banner .bb-title {
+    font-family:'Playfair Display', serif; font-style:italic; font-weight:700;
+    color:var(--accent); font-size:14px;
+  }
+  .bingo-banner .bb-text {
+    font-size:10.5px; color:var(--ink-soft); margin-top:2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h0>Becky + Sam's Europa Extravaganza</h0>
+  <span class="sub">Trip Bingo · Aug–Sep 2026</span>
+  <div class="route-line">🇦🇺 SYD ✈ 🇮🇹 Italy ✈ 🇬🇧 England &amp; 🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales ✈ 🇦🇺 SYD</div>
+</div>
+<div class="profile-switch" id="profileSwitch"></div>
+<div class="tabs" id="tabs"></div>
+<div class="card" id="card"></div>
+<div class="footer">
+  <span>
+    <span id="progress"></span>
+    <span id="syncStatus" style="display:block;font-size:9px;margin-top:1px;"></span>
+  </span>
+  <button class="reset-btn" onclick="resetCurrent()">Clear this card</button>
+</div>
+
+<script>
+const DESTINATIONS = [
+  {
+    id: "rome", accent:"#B5472B", name:"Roma", dates:"21–24 August",
+    route:"SYD → ICN → ROM · FJ9WRF", flag:"🇮🇹", code:"ROM",
+    prize:"BLACKOUT IN ROME! You've out-tourist-ed the tourists. Winner picks where you eat tonight, no debate.",
+    miniPrize:"Line! Winner chooses what's on TV tonight.",
+    items:[
+      "Colosseum at sunset","Trevi Fountain coin toss","Cacio e pepe","Espresso standing at the bar",
+      "Pantheon dome","Spanish Steps","Suppl\u00ec (fried rice ball)","Nun or priest sighting",
+      "Vespa weaving through traffic","Pistachio gelato","Roman Forum ruins","Aperitivo spritz",
+      "Carbonara done right","Trastevere alleyway","Ancient column just… in the street",
+      "Drinking from a nasone fountain","Piazza Navona street artist","Cornetto for breakfast",
+      "Someone gesturing wildly","Fresco ceiling","A Roman cat","Scooter cacophony",
+      "Bruschetta","Sunset over rooftops"
+    ]
+  },
+  {
+    id:"bologna", accent:"#8C1F28", name:"Bologna", dates:"24–26 August",
+    route:"Rome → Bologna, 2pm · AR47GN", flag:"🇮🇹", code:"BLQ",
+    prize:"BLACKOUT IN BOLOGNA! Food capital officially conquered. Winner gets first FaceTime with Picasso tonight.",
+    miniPrize:"Line! Winner picks the next activity, no vetoes.",
+    items:[
+      "Tortellini in brodo","Le Due Torri","Real rag\u00f9 alla Bolognese","Portici (arcaded walkway)",
+      "Mortadella slice","A whole wheel of Parmigiano","Fresh tagliatelle","Piazza Maggiore",
+      "Terracotta rooftops","Aperitivo with tigelle","Balsamic drizzle","University students everywhere",
+      "Gelateria queue","Neptune Fountain","Salumeria window display","Espresso #2 of the day",
+      "Cyclists on cobblestones","Lasagna verde","Market stall haggling","Church bell chiming",
+      "Wine list longer than the menu","\u201cIt's not spaghetti bolognese\u201d","Crescentine (fried dough)","Sunday market stroll"
+    ]
+  },
+  {
+    id:"montebelluna", accent:"#5B6E3E", name:"Montebelluna", dates:"26–30 August",
+    route:"Bologna → Montebelluna, 2:51pm · AR47GN · wedding weekend", flag:"🇮🇹", code:"TSF",
+    prize:"BLACKOUT IN MONTEBELLUNA! Winner picks tonight's embarrassing photo of the other one for the group chat.",
+    miniPrize:"Line! Winner chooses where you eat tonight.",
+    items:[
+      "Prosecco hills view","Spritz at golden hour","Rows of vineyards","Polenta with something rich",
+      "Asolo hilltop town","Grappa on the table","Radicchio on the menu","Sleepy piazza",
+      "A church bell tower","Cyclist on a country road","First dance","Mountain cheese",
+      "Prosciutto plate","A nonna watching the street","Mountains in the distance","Family-run trattoria",
+      "Fresh basil, everywhere","A speech in two languages","Confetti everywhere","Espresso after every meal",
+      "A villa in the countryside","Wedding toast with Prosecco","Wine cellar tour","Golden-hour drive"
+    ]
+  },
+  {
+    id:"rapallo", accent:"#D97A3D", name:"Rapallo", dates:"31 Aug – 3 Sep",
+    route:"By car, along the coast", flag:"🇮🇹", code:"GOA",
+    prize:"BLACKOUT ON THE RIVIERA! You out-yachted the yacht people. Winner claims the window seat on the flight to Birmingham.",
+    miniPrize:"Line! Winner picks what's on TV tonight.",
+    items:[
+      "Colourful harbour houses","Yacht spotting","Pesto, the real deal","Focaccia di Recco",
+      "Piazzetta people-watching","Church of San Giorgio","Cliffside path walk","Fresh anchovies",
+      "Ligurian white wine","Someone in designer sunglasses","A fishing boat","Trofie al pesto",
+      "Turquoise water","Lighthouse view","Overpriced espresso, worth it","Hike to San Fruttuoso",
+      "Lemon, on everything","Seafood linguine","Pastel building photo op","Boat tour tout",
+      "Basil on a balcony","Gelato by the water","\u201cJust like the movies\u201d","Cliffside sunset"
+    ]
+  },
+  {
+    id:"coventry", accent:"#2B3A5C", name:"Coventry", dates:"5–7 September",
+    route:"Pisa → Birmingham, 12:40pm · H4V1XG", flag:"🇬🇧", code:"BHX",
+    prize:"BLACKOUT IN COVENTRY! You've basically gone full local. Winner gets first FaceTime with Picasso.",
+    miniPrize:"Line! Winner controls the music for the rest of the day.",
+    items:[
+      "Cathedral ruins","Lady Godiva statue","A proper cup of tea","Fish and chips",
+      "Grey sky, brief sun","\u201cYou alright?\u201d","Pork pie","Sunday roast at the pub",
+      "Cathedral spire view","Rain that wasn't forecast","A polite queue","Full English breakfast",
+      "Church bells","A pint at the local","Ring road confusion","Historic plaque you stop to read",
+      "\u201cCheers, love\u201d","University students","Chips with gravy","War memorial",
+      "Yorkshire pudding","Precinct shopping","Car museum small talk","First rain of the trip"
+    ]
+  },
+  {
+    id:"wales", accent:"#2F5D3A", name:"Wales", dates:"7–10 September",
+    route:"Coventry → St Clears & Tenby, by car", flag:"🏴󠁧󠁢󠁷󠁬󠁳󠁿", code:"WAL",
+    prize:"BLACKOUT IN WALES! Castles, coastline, and unpronounceable place names, conquered. Winner picks the most embarrassing photo of the other one to send home.",
+    miniPrize:"Line! Winner picks the next activity, no vetoes.",
+    items:[
+      "Tenby's pastel harbour houses","Ice cream on the harbour wall","Welsh cakes fresh off the griddle",
+      "Castle Hill view over the bay","St Catherine's Island at low tide","Boat trip to Caldey Island",
+      "Tenby's medieval town walls","Fish and chips by the sea","St Clears castle mound",
+      "River Taf countryside","Blink-and-you-miss-it village","A proper Welsh pub lunch",
+      "Sheep somewhere near St Clears","Rain rolling in off the coast","Tenby beach at low tide",
+      "A \u201cnot from round here\u201d moment","Dramatic coastline drive","Bara brith (fruit loaf)",
+      "Rugby chat in the pub","\u201cBore da\u201d from a local","Coastal path walk",
+      "Welsh flag sighting","Slate rooftops","Getting lost, happily"
+    ]
+  },
+  {
+    id:"redditch", accent:"#A8792A", name:"Redditch", dates:"10–12 September",
+    route:"Wales → Redditch, by car · Bertie's 2nd birthday · last stop before LHR–SEL–SYD", flag:"🇬🇧", code:"RDT",
+    prize:"BLACKOUT ON THE LAST STOP! Trip officially complete. Winner picks the in-flight movie for both of you.",
+    miniPrize:"Line! Winner picks the parting activity before the airport.",
+    items:[
+      "Bertie turns two!","Birthday cake candles","Wrapping last-minute presents","A very small birthday hat",
+      "Balloons somewhere in the house","Sunday carvery","Roundabout number three","Canal-side walk",
+      "A proper Midlands pint","Forge Mill Needle Museum nod","Packing for the flight home","Countryside drive",
+      "\u201cYou off soon then?\u201d","Farewell dinner","One last full English","Countdown to LHR",
+      "Feckenham countryside","Local market stall","A strong local accent","Church spire",
+      "Garden centre detour","Suitcase repacking Tetris","A quiet pub garden","One more cup of tea"
+    ]
+  }
+];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyACFgM2u37e2eOtS51t-Gy7JpY4Wp9lLCQ",
+  authDomain: "trip-bingo-d36aa.firebaseapp.com",
+  databaseURL: "https://trip-bingo-d36aa-default-rtdb.firebaseio.com",
+  projectId: "trip-bingo-d36aa",
+  storageBucket: "trip-bingo-d36aa.firebasestorage.app",
+  messagingSenderId: "889694374337",
+  appId: "1:889694374337:web:d89225a58951b89edf8740"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const stateRef = db.ref("tripBingoState");
+const connectedRef = db.ref(".info/connected");
+
+const PROFILE_KEY = "euroTripProfile";
+let state = null;
+let hasLoadedOnce = false;
+let isConnected = false;
+let activeId = DESTINATIONS[0].id;
+let activeProfile = "becky";
+
+DESTINATIONS.forEach(d => {
+  if (d.size === undefined) d.size = 5;
+  if (d.freeIndex === undefined) d.freeIndex = Math.floor((d.size * d.size) / 2);
+});
+
+try {
+  const savedProfile = localStorage.getItem(PROFILE_KEY);
+  if (savedProfile === "becky" || savedProfile === "sam") activeProfile = savedProfile;
+} catch (e) {}
+function saveProfile() {
+  try { localStorage.setItem(PROFILE_KEY, activeProfile); } catch (e) {}
+}
+
+function defaultState() {
+  const s = {};
+  DESTINATIONS.forEach(d => {
+    s[d.id] = { becky: Array(d.items.length).fill(false), sam: Array(d.items.length).fill(false) };
+  });
+  return s;
+}
+function fillGaps(s) {
+  DESTINATIONS.forEach(d => {
+    if (!s[d.id]) s[d.id] = {};
+    ["becky","sam"].forEach(p => {
+      if (!s[d.id][p] || s[d.id][p].length !== d.items.length) {
+        s[d.id][p] = Array(d.items.length).fill(false);
+      }
+    });
+  });
+  return s;
+}
+
+connectedRef.on("value", (snap) => {
+  isConnected = snap.val() === true;
+  renderStatus();
+});
+
+stateRef.on("value", (snap) => {
+  const val = snap.val();
+  if (val) {
+    state = fillGaps(val);
+  } else if (!hasLoadedOnce) {
+    state = defaultState();
+    stateRef.set(state);
+  }
+  hasLoadedOnce = true;
+  render();
+}, (err) => {
+  if (!state) state = defaultState();
+  render();
+});
+
+function saveState() {
+  if (state) stateRef.set(state);
+}
+
+function statusLabel() {
+  if (!hasLoadedOnce) return "🔄 Connecting…";
+  return isConnected ? "🟢 Synced live" : "🟡 Offline — will sync when back online";
+}
+function renderStatus() {
+  const el = document.getElementById("syncStatus");
+  if (el) el.textContent = statusLabel();
+}
+
+function renderProfileSwitch() {
+  const wrap = document.getElementById("profileSwitch");
+  wrap.innerHTML = `
+    <button class="profile-btn becky ${activeProfile === 'becky' ? 'active becky' : ''}" id="btnBecky">🔴 Becky</button>
+    <button class="profile-btn sam ${activeProfile === 'sam' ? 'active sam' : ''}" id="btnSam">🔵 Sam</button>
+  `;
+  document.getElementById("btnBecky").onclick = () => { activeProfile = "becky"; saveProfile(); render(); };
+  document.getElementById("btnSam").onclick = () => { activeProfile = "sam"; saveProfile(); render(); };
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  DESTINATIONS.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "tab" + (d.id === activeId ? " active" : "");
+    el.textContent = `${d.flag} ${d.name}`;
+    el.onclick = () => { activeId = d.id; render(); };
+    tabs.appendChild(el);
+  });
+}
+
+function checkBingo(marks, size, freeIndex) {
+  const total = size * size;
+  const full = [];
+  let markPos = 0;
+  for (let i = 0; i < total; i++) {
+    if (freeIndex !== null && i === freeIndex) full.push(true);
+    else { full.push(marks[markPos]); markPos++; }
+  }
+  const idxRange = Array.from({length: size}, (_, k) => k);
+  const lines = [];
+  for (let r = 0; r < size; r++) lines.push(idxRange.map(c => r*size+c));
+  for (let c = 0; c < size; c++) lines.push(idxRange.map(r => r*size+c));
+  lines.push(idxRange.map(k => k*size+k));
+  lines.push(idxRange.map(k => k*size + (size-1-k)));
+  const winCells = new Set();
+  lines.forEach(line => {
+    if (line.every(idx => full[idx])) line.forEach(idx => winCells.add(idx));
+  });
+  return winCells;
+}
+
+function render() {
+  if (!state) { renderStatus(); return; }
+  renderProfileSwitch();
+  renderTabs();
+  const dest = DESTINATIONS.find(d => d.id === activeId);
+  document.documentElement.style.setProperty("--accent", dest.accent);
+  const marks = state[dest.id][activeProfile];
+  const size = dest.size;
+  const freeIndex = dest.freeIndex;
+  const winCells = checkBingo(marks, size, freeIndex);
+  const blackout = marks.every(Boolean);
+  const profileLabel = activeProfile === "becky" ? "🔴 Becky" : "🔵 Sam";
+
+  const card = document.getElementById("card");
+  card.innerHTML = `
+    <div class="stamp-badge">
+      <span class="flag">${dest.flag}</span>
+      <span class="code">${dest.code}</span>
+    </div>
+    <div class="eyebrow">${dest.dates} · ${profileLabel}'s card</div>
+    <h1>${dest.name}</h1>
+    <span class="route">${dest.route}</span>
+    <div class="bingo-banner ${winCells.size ? 'show' : ''}">
+      <div class="bb-title">★ Line! ★</div>
+      <div class="bb-text">${dest.miniPrize}</div>
+    </div>
+    <div class="grid" id="grid" style="grid-template-columns:repeat(${size},1fr)"></div>
+    <div class="prize ${blackout ? 'show' : ''}">
+      <div class="prize-title">🔓 ${dest.name} unlocked</div>
+      <div class="prize-text">${dest.prize}</div>
+    </div>
+  `;
+  const grid = document.getElementById("grid");
+  let itemIdx = 0;
+  const total = size * size;
+  for (let i = 0; i < total; i++) {
+    const el = document.createElement("div");
+    if (freeIndex !== null && i === freeIndex) {
+      el.className = "cell free" + (blackout ? " won" : "");
+      el.innerHTML = `<span class="lock">${blackout ? "★" : "🔒"}</span>`;
+    } else {
+      const checked = marks[itemIdx];
+      el.className = "cell" + (checked ? " checked" : "") + (winCells.has(i) ? " win" : "");
+      el.textContent = dest.items[itemIdx];
+      const idx = itemIdx;
+      el.onclick = () => {
+        state[dest.id][activeProfile][idx] = !state[dest.id][activeProfile][idx];
+        saveState();
+        render();
+      };
+      itemIdx++;
+    }
+    grid.appendChild(el);
+  }
+  const checkedCount = marks.filter(Boolean).length;
+  document.getElementById("progress").textContent = `${profileLabel}: ${checkedCount}/${dest.items.length} ticked`;
+  renderStatus();
+}
+
+function resetCurrent() {
+  const profileLabel = activeProfile === "becky" ? "Becky's" : "Sam's";
+  if (confirm(`Clear ${profileLabel} ticks for this card?`)) {
+    const dest = DESTINATIONS.find(d => d.id === activeId);
+    state[activeId][activeProfile] = Array(dest.items.length).fill(false);
+    saveState();
+    render();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
