@@ -6,6 +6,8 @@
 <title>Becky + Sam's Europa Extravaganza</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Special+Elite&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
 <style>
   :root { --paper:#FAF6ED; --ink:#2E2A24; --ink-soft:#6b6355; --accent:#B5472B; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -309,12 +311,24 @@ const DESTINATIONS = [
   }
 ];
 
-const DB_URL = "https://trip-bingo-d36aa-default-rtdb.firebaseio.com/tripBingoState.json";
+const firebaseConfig = {
+  apiKey: "AIzaSyACFgM2u37e2eOtS51t-Gy7JpY4Wp9lLCQ",
+  authDomain: "trip-bingo-d36aa.firebaseapp.com",
+  databaseURL: "https://trip-bingo-d36aa-default-rtdb.firebaseio.com",
+  projectId: "trip-bingo-d36aa",
+  storageBucket: "trip-bingo-d36aa.firebasestorage.app",
+  messagingSenderId: "889694374337",
+  appId: "1:889694374337:web:d89225a58951b89edf8740"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const stateRef = db.ref("tripBingoState");
+const connectedRef = db.ref(".info/connected");
 
 const PROFILE_KEY = "euroTripProfile";
 let state = null;
 let hasLoadedOnce = false;
-let lastFetchOk = false;
+let isConnected = false;
 let activeId = DESTINATIONS[0].id;
 let activeProfile = "becky";
 
@@ -343,67 +357,40 @@ function fillGaps(s) {
     if (!s[d.id] || !Array.isArray(s[d.id]) || s[d.id].length !== d.items.length) {
       s[d.id] = Array(d.items.length).fill(null);
     } else {
-      // normalize any leftover non-owner values (e.g. old true/false data) to null
       s[d.id] = s[d.id].map(v => (v === "becky" || v === "sam") ? v : null);
     }
   });
   return s;
 }
 
-let lastSeenJSON = "";
+connectedRef.on("value", (snap) => {
+  isConnected = snap.val() === true;
+  renderStatus();
+});
 
-async function fetchState() {
-  try {
-    const res = await fetch(DB_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error("bad status");
-    const val = await res.json();
-    lastFetchOk = true;
-    if (val) {
-      const json = JSON.stringify(val);
-      if (json !== lastSeenJSON) {
-        state = fillGaps(val);
-        lastSeenJSON = json;
-        render();
-      } else if (!hasLoadedOnce) {
-        render();
-      }
-    } else if (!hasLoadedOnce) {
-      state = defaultState();
-      lastSeenJSON = JSON.stringify(state);
-      await pushState();
-      render();
-    }
-  } catch (e) {
-    lastFetchOk = false;
-    if (!state) state = defaultState();
-    render();
+stateRef.on("value", (snap) => {
+  const val = snap.val();
+  if (val) {
+    state = fillGaps(val);
+  } else if (!hasLoadedOnce) {
+    state = defaultState();
+    stateRef.set(state);
   }
   hasLoadedOnce = true;
-  renderStatus();
-}
-
-async function pushState() {
-  try {
-    await fetch(DB_URL, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(state)
-    });
-    lastSeenJSON = JSON.stringify(state);
-    lastFetchOk = true;
-  } catch (e) {
-    lastFetchOk = false;
-  }
-  renderStatus();
-}
+  render();
+}, (err) => {
+  if (!state) state = defaultState();
+  hasLoadedOnce = true;
+  render();
+});
 
 function saveState() {
-  pushState();
+  if (state) stateRef.set(state);
 }
 
 function statusLabel() {
   if (!hasLoadedOnce) return "🔄 Connecting…";
-  return lastFetchOk ? "🟢 Synced" : "🟡 Offline — will sync when back online";
+  return isConnected ? "🟢 Synced live" : "🟡 Offline — will sync when back online";
 }
 function renderStatus() {
   const el = document.getElementById("syncStatus");
@@ -533,8 +520,7 @@ function resetCurrent() {
   }
 }
 
-fetchState();
-setInterval(fetchState, 3000);
+renderStatus();
 </script>
 </body>
 </html>
