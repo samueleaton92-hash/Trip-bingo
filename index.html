@@ -357,6 +357,7 @@ function fillGaps(s) {
     if (!s[d.id] || !Array.isArray(s[d.id]) || s[d.id].length !== d.items.length) {
       s[d.id] = Array(d.items.length).fill(null);
     } else {
+      // normalize any leftover non-owner values (e.g. old true/false data) to null
       s[d.id] = s[d.id].map(v => (v === "becky" || v === "sam") ? v : null);
     }
   });
@@ -384,8 +385,11 @@ stateRef.on("value", (snap) => {
   render();
 });
 
-function saveState() {
-  if (state) stateRef.set(state);
+function saveCell(destId, idx, value) {
+  db.ref(`tripBingoState/${destId}/${idx}`).set(value);
+}
+function saveWholeCard(destId, arr) {
+  db.ref(`tripBingoState/${destId}`).set(arr);
 }
 
 function statusLabel() {
@@ -419,6 +423,37 @@ function renderTabs() {
   });
 }
 
+function hashSeed(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function() {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return h >>> 0;
+  };
+}
+function seededShuffle(arr, seedStr) {
+  const rand = hashSeed(seedStr);
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = rand() % (i + 1);
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+function getDisplayOrder(dest, profile) {
+  if (!dest._orderCache) dest._orderCache = {};
+  if (!dest._orderCache[profile]) {
+    const base = Array.from({length: dest.items.length}, (_, i) => i);
+    dest._orderCache[profile] = seededShuffle(base, dest.id + "-" + profile);
+  }
+  return dest._orderCache[profile];
+}
+
 function checkBingo(marks, size, freeIndex) {
   const total = size * size;
   const full = [];
@@ -449,9 +484,10 @@ function render() {
   const owners = state[dest.id];
   const size = dest.size;
   const freeIndex = dest.freeIndex;
-  const claimedBool = owners.map(v => v !== null);
-  const winCells = checkBingo(claimedBool, size, freeIndex);
-  const blackout = claimedBool.every(Boolean);
+  const order = getDisplayOrder(dest, activeProfile);
+  const claimedBoolInOrder = order.map(canonicalIdx => owners[canonicalIdx] !== null);
+  const winCells = checkBingo(claimedBoolInOrder, size, freeIndex);
+  const blackout = owners.every(v => v !== null);
   const profileLabel = activeProfile === "becky" ? "🔴 Becky" : "🔵 Sam";
   const beckyCount = owners.filter(v => v === "becky").length;
   const samCount = owners.filter(v => v === "sam").length;
@@ -476,7 +512,7 @@ function render() {
     </div>
   `;
   const grid = document.getElementById("grid");
-  let itemIdx = 0;
+  let posIdx = 0;
   const total = size * size;
   for (let i = 0; i < total; i++) {
     const el = document.createElement("div");
@@ -484,39 +520,38 @@ function render() {
       el.className = "cell free" + (blackout ? " won" : "");
       el.innerHTML = `<span class="lock">${blackout ? "★" : "🔒"}</span>`;
     } else {
-      const owner = owners[itemIdx];
+      const canonicalIdx = order[posIdx];
+      const owner = owners[canonicalIdx];
       const ownerClass = owner ? ` owner-${owner}` : "";
       const blockedClass = (owner && owner !== activeProfile) ? " blocked" : "";
       el.className = "cell" + ownerClass + blockedClass + (winCells.has(i) ? " win" : "");
-      el.textContent = dest.items[itemIdx];
-      const idx = itemIdx;
+      el.textContent = dest.items[canonicalIdx];
       el.onclick = () => {
-        const current = state[dest.id][idx];
-        if (current === activeProfile) {
-          state[dest.id][idx] = null;
-        } else if (current === null) {
-          state[dest.id][idx] = activeProfile;
-        } else {
-          return;
-        }
-        saveState();
+        const current = state[dest.id][canonicalIdx];
+        let newVal;
+        if (current === activeProfile) newVal = null;
+        else if (current === null) newVal = activeProfile;
+        else return;
+        state[dest.id][canonicalIdx] = newVal;
         render();
+        saveCell(dest.id, canonicalIdx, newVal);
       };
-      itemIdx++;
+      posIdx++;
     }
     grid.appendChild(el);
   }
   document.getElementById("progress").textContent =
-    `${claimedBool.filter(Boolean).length}/${dest.items.length} ticked · 🔴 Becky ${beckyCount} · 🔵 Sam ${samCount}`;
+    `${owners.filter(v => v !== null).length}/${dest.items.length} ticked · 🔴 Becky ${beckyCount} · 🔵 Sam ${samCount}`;
   renderStatus();
 }
 
 function resetCurrent() {
   if (confirm("Clear all ticks on this card for both of you?")) {
     const dest = DESTINATIONS.find(d => d.id === activeId);
-    state[activeId] = Array(dest.items.length).fill(null);
-    saveState();
+    const cleared = Array(dest.items.length).fill(null);
+    state[activeId] = cleared;
     render();
+    saveWholeCard(activeId, cleared);
   }
 }
 
