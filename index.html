@@ -281,18 +281,18 @@ const DESTINATIONS = [
     ]
   },
   {
-    id:"montebelluna", accent:"#5B6E3E", name:"Montebelluna", dates:"26–30 August",
+    id:"montebelluna", accent:"#5B6E3E", name:"Montebelluna & Venice", dates:"26–30 August",
     route:"Bologna → Montebelluna, 2:51pm · AR47GN · wedding weekend", flag:"🇮🇹", code:"TSF",
-    prize:"BLACKOUT IN MONTEBELLUNA! Winner picks tonight's embarrassing photo of the other one for the group chat.",
+    prize:"BLACKOUT IN MONTEBELLUNA & VENICE! Winner picks tonight's embarrassing photo of the other one for the group chat.",
     hLinePrize:"Row! Winner chooses where you eat tonight.",
     vLinePrize:"Column! Winner picks the drive playlist.",
     items:[
-      "Prosecco hills view","Spritz at golden hour","Rows of vineyards","Polenta with something rich",
-      "Asolo hilltop town","Grappa on the table","Radicchio on the menu","Sleepy piazza",
-      "A church bell tower","Cyclist on a country road","First dance","Mountain cheese",
-      "Prosciutto plate","A nonna watching the street","Mountains in the distance","Family-run trattoria",
-      "Fresh basil, everywhere","A speech in two languages","Confetti everywhere","Espresso after every meal",
-      "A villa in the countryside","Wedding toast with Prosecco","Wine cellar tour","Golden-hour drive"
+      "Prosecco hills view","Spritz at golden hour","Rows of vineyards","Gondola ride",
+      "Asolo hilltop town","Grappa on the table","St Mark's Square","Rialto Bridge photo",
+      "A church bell tower","Cyclist on a country road","First dance","Getting lost in the calli",
+      "Prosciutto plate","A nonna watching the street","Vaporetto ride","Family-run trattoria",
+      "Murano glass shop","A speech in two languages","Confetti everywhere","Venetian mask sighting",
+      "A villa in the countryside","Wedding toast with Prosecco","Canal reflection photo","Golden-hour drive"
     ]
   },
   {
@@ -568,8 +568,12 @@ function render() {
   const freeIndex = dest.freeIndex;
   const total = size * size;
   const order = getDisplayOrder(dest, activeProfile);
-  const claimedBoolInOrder = order.map(canonicalIdx => owners[canonicalIdx] !== null);
-  const { hasRow, hasCol, rowCells, colCells, winCells } = checkLines(claimedBoolInOrder, size, freeIndex);
+
+  // Row/column detection runs on a FIXED, unshuffled arrangement (canonical item order 0..N-1)
+  // so a completed line means the same thing regardless of which profile's shuffled view is open —
+  // it must never depend on whichever person happens to be looking.
+  const claimedBoolCanonical = owners.map(v => v !== null);
+  const { hasRow, hasCol, rowCells, colCells, winCells: canonicalWinCells } = checkLines(claimedBoolCanonical, size, freeIndex);
   const blackout = owners.every(v => v !== null);
   const isFinished = !!finished[dest.id];
   const decided = blackout || isFinished;
@@ -577,17 +581,19 @@ function render() {
   const beckyCount = owners.filter(v => v === "becky").length;
   const samCount = owners.filter(v => v === "sam").length;
 
-  // map full-grid position -> canonical item index (null for the free cell)
-  const fullToCanonical = [];
-  let p = 0;
-  for (let i = 0; i < total; i++) {
-    if (freeIndex !== null && i === freeIndex) fullToCanonical.push(null);
-    else { fullToCanonical.push(order[p]); p++; }
+  // canonical full-grid position -> canonical item index (identity mapping, null for the free cell)
+  const canonicalFullToItem = [];
+  {
+    let ci = 0;
+    for (let i = 0; i < total; i++) {
+      if (freeIndex !== null && i === freeIndex) canonicalFullToItem.push(null);
+      else { canonicalFullToItem.push(ci); ci++; }
+    }
   }
   function tally(cellSet) {
     let becky = 0, sam = 0;
     cellSet.forEach(fullIdx => {
-      const canonical = fullToCanonical[fullIdx];
+      const canonical = canonicalFullToItem[fullIdx];
       if (canonical === null) return;
       const owner = owners[canonical];
       if (owner === "becky") becky++;
@@ -600,6 +606,12 @@ function render() {
     if (counts.sam > counts.becky) return "🔵 Sam";
     return "Tied";
   }
+
+  // which canonical ITEMS (not grid positions) are part of a completed line —
+  // used to highlight the right squares no matter where they land in this profile's shuffle
+  const winItemIndices = new Set(
+    [...canonicalWinCells].map(fullIdx => canonicalFullToItem[fullIdx]).filter(v => v !== null)
+  );
 
   let rowBannerHtml = "";
   if (hasRow) {
@@ -656,7 +668,7 @@ function render() {
       const owner = owners[canonicalIdx];
       const ownerClass = owner ? ` owner-${owner}` : "";
       const blockedClass = (owner && owner !== activeProfile) ? " blocked" : "";
-      el.className = "cell" + ownerClass + blockedClass + (winCells.has(i) ? " win" : "");
+      el.className = "cell" + ownerClass + blockedClass + (winItemIndices.has(canonicalIdx) ? " win" : "");
       el.textContent = dest.items[canonicalIdx];
       el.onclick = () => {
         const current = state[dest.id][canonicalIdx];
