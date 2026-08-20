@@ -354,12 +354,24 @@ function defaultState() {
 }
 function fillGaps(s) {
   DESTINATIONS.forEach(d => {
-    if (!s[d.id] || !Array.isArray(s[d.id]) || s[d.id].length !== d.items.length) {
-      s[d.id] = Array(d.items.length).fill(null);
-    } else {
-      // normalize any leftover non-owner values (e.g. old true/false data) to null
-      s[d.id] = s[d.id].map(v => (v === "becky" || v === "sam") ? v : null);
+    const raw = s[d.id];
+    const reconstructed = Array(d.items.length).fill(null);
+    if (Array.isArray(raw)) {
+      raw.forEach((v, i) => {
+        if (i < d.items.length && (v === "becky" || v === "sam")) reconstructed[i] = v;
+      });
+    } else if (raw && typeof raw === "object") {
+      // Firebase collapses sparse arrays into a plain object keyed by index —
+      // reconstruct a real array from those keys instead of discarding the data.
+      Object.keys(raw).forEach(k => {
+        const i = parseInt(k, 10);
+        if (!isNaN(i) && i >= 0 && i < d.items.length) {
+          const v = raw[k];
+          if (v === "becky" || v === "sam") reconstructed[i] = v;
+        }
+      });
     }
+    s[d.id] = reconstructed;
   });
   return s;
 }
