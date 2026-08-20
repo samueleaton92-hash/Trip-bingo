@@ -253,8 +253,11 @@ const DESTINATIONS = [
     id: "rome", accent:"#B5472B", name:"Roma", dates:"21–24 August",
     route:"SYD → ICN → ROM · FJ9WRF", flag:"🇮🇹", code:"ROM",
     prize:"BLACKOUT IN ROME! You've out-tourist-ed the tourists. Winner picks where you eat tonight, no debate.",
-    hLinePrize:"Row! Winner chooses what's on TV tonight.",
-    vLinePrize:"Column! Winner picks the next photo stop.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner picks tomorrow's playlist."},
+      {idx:9, prize:"🤫 Secret square! Winner chooses the next gelato flavour, no debate."},
+      {idx:16, prize:"🤫 Secret square! Winner gets the window seat on the next train."}
+    ],
     items:[
       "Colosseum at sunset","Trevi Fountain coin toss","Cacio e pepe","Espresso standing at the bar",
       "Pantheon dome","Spanish Steps","Suppl\u00ec (fried rice ball)","Nun or priest sighting",
@@ -269,8 +272,11 @@ const DESTINATIONS = [
     id:"bologna", accent:"#8C1F28", name:"Bologna", dates:"24–26 August",
     route:"Rome → Bologna, 2pm · AR47GN", flag:"🇮🇹", code:"BLQ",
     prize:"BLACKOUT IN BOLOGNA! Food capital officially conquered. Winner gets first FaceTime with Picasso tonight.",
-    hLinePrize:"Row! Winner picks the next activity, no vetoes.",
-    vLinePrize:"Column! Winner gets first dibs on the dessert stop.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner picks the next stop's music."},
+      {idx:9, prize:"🤫 Secret square! Winner chooses tonight's dessert."},
+      {idx:16, prize:"🤫 Secret square! Winner gets first dibs on the shower."}
+    ],
     items:[
       "Tortellini in brodo","Le Due Torri","Real rag\u00f9 alla Bolognese","Portici (arcaded walkway)",
       "Mortadella slice","A whole wheel of Parmigiano","Fresh tagliatelle","Piazza Maggiore",
@@ -284,8 +290,11 @@ const DESTINATIONS = [
     id:"montebelluna", accent:"#5B6E3E", name:"Montebelluna & Venice", dates:"26–30 August",
     route:"Bologna → Montebelluna, 2:51pm · AR47GN · wedding weekend", flag:"🇮🇹", code:"TSF",
     prize:"BLACKOUT IN MONTEBELLUNA & VENICE! Winner picks tonight's embarrassing photo of the other one for the group chat.",
-    hLinePrize:"Row! Winner chooses where you eat tonight.",
-    vLinePrize:"Column! Winner picks the drive playlist.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner picks today's route — car or boat."},
+      {idx:9, prize:"🤫 Secret square! Winner chooses the next gondola photo op."},
+      {idx:16, prize:"🤫 Secret square! Winner gets the last of the Prosecco."}
+    ],
     items:[
       "Prosecco hills view","Spritz at golden hour","Rows of vineyards","Gondola ride",
       "Asolo hilltop town","Grappa on the table","St Mark's Square","Rialto Bridge photo",
@@ -299,8 +308,11 @@ const DESTINATIONS = [
     id:"rapallo", accent:"#D97A3D", name:"Rapallo", dates:"31 Aug – 3 Sep",
     route:"By car, along the coast", flag:"🇮🇹", code:"GOA",
     prize:"BLACKOUT ON THE RIVIERA! You out-yachted the yacht people. Winner claims the window seat on the flight to Birmingham.",
-    hLinePrize:"Row! Winner picks what's on TV tonight.",
-    vLinePrize:"Column! Winner claims the next window seat.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner gets the next window seat."},
+      {idx:9, prize:"🤫 Secret square! Winner picks the beach spot."},
+      {idx:16, prize:"🤫 Secret square! Winner chooses tonight's gelato flavour."}
+    ],
     items:[
       "Colourful harbour houses","Yacht spotting","Pesto, the real deal","Focaccia di Recco",
       "Piazzetta people-watching","Church of San Giorgio","Cliffside path walk","Fresh anchovies",
@@ -314,8 +326,11 @@ const DESTINATIONS = [
     id:"coventry", accent:"#2B3A5C", name:"Coventry", dates:"5–7 September",
     route:"Pisa → Birmingham, 12:40pm · H4V1XG", flag:"🇬🇧", code:"BHX",
     prize:"BLACKOUT IN COVENTRY! You've basically gone full local. Winner gets first FaceTime with Picasso.",
-    hLinePrize:"Row! Winner controls the music for the rest of the day.",
-    vLinePrize:"Column! Winner picks the next activity, no vetoes.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner controls the music for an hour."},
+      {idx:9, prize:"🤫 Secret square! Winner picks the next activity."},
+      {idx:16, prize:"🤫 Secret square! Winner gets first pick of the shower."}
+    ],
     items:[
       "Cathedral ruins","Lady Godiva statue","A proper cup of tea","Fish and chips",
       "Grey sky, brief sun","\u201cYou alright?\u201d","Pork pie","Sunday roast at the pub",
@@ -329,8 +344,11 @@ const DESTINATIONS = [
     id:"wales", accent:"#2F5D3A", name:"Wales", dates:"7–10 September",
     route:"Coventry → St Clears & Tenby, by car", flag:"🏴󠁧󠁢󠁷󠁬󠁳󠁿", code:"WAL",
     prize:"BLACKOUT IN WALES! Castles, coastline, and unpronounceable place names, conquered. Winner picks the most embarrassing photo of the other one to send home.",
-    hLinePrize:"Row! Winner picks the next activity, no vetoes.",
-    vLinePrize:"Column! Winner gets first pick of the next photo stop.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner names the next scenic stop."},
+      {idx:9, prize:"🤫 Secret square! Winner picks the next activity, no vetoes."},
+      {idx:16, prize:"🤫 Secret square! Winner controls the car playlist."}
+    ],
     items:[
       "Tenby's pastel harbour houses","Ice cream on the harbour wall","Welsh cakes fresh off the griddle",
       "Castle Hill view over the bay","St Catherine's Island at low tide","Boat trip to Caldey Island",
@@ -346,8 +364,11 @@ const DESTINATIONS = [
     id:"redditch", accent:"#A8792A", name:"Redditch", dates:"10–12 September",
     route:"Wales → Redditch, by car · Bertie's 2nd birthday · last stop before LHR–SEL–SYD", flag:"🇬🇧", code:"RDT",
     prize:"BLACKOUT ON THE LAST STOP! Trip officially complete. Winner picks the in-flight movie for both of you.",
-    hLinePrize:"Row! Winner picks the parting activity before the airport.",
-    vLinePrize:"Column! Winner controls the music for the drive to the airport.",
+    secrets:[
+      {idx:2, prize:"🤫 Secret square! Winner picks the in-flight movie."},
+      {idx:9, prize:"🤫 Secret square! Winner gets the window seat home."},
+      {idx:16, prize:"🤫 Secret square! Winner controls the music for the drive to the airport."}
+    ],
     items:[
       "Bertie turns two!","Birthday cake candles","Wrapping last-minute presents","A very small birthday hat",
       "Balloons somewhere in the house","Sunday carvery","Roundabout number three","Canal-side walk",
@@ -569,11 +590,6 @@ function render() {
   const total = size * size;
   const order = getDisplayOrder(dest, activeProfile);
 
-  // Row/column detection runs on a FIXED, unshuffled arrangement (canonical item order 0..N-1)
-  // so a completed line means the same thing regardless of which profile's shuffled view is open —
-  // it must never depend on whichever person happens to be looking.
-  const claimedBoolCanonical = owners.map(v => v !== null);
-  const { hasRow, hasCol, rowCells, colCells, winCells: canonicalWinCells } = checkLines(claimedBoolCanonical, size, freeIndex);
   const blackout = owners.every(v => v !== null);
   const isFinished = !!finished[dest.id];
   const decided = blackout || isFinished;
@@ -581,56 +597,20 @@ function render() {
   const beckyCount = owners.filter(v => v === "becky").length;
   const samCount = owners.filter(v => v === "sam").length;
 
-  // canonical full-grid position -> canonical item index (identity mapping, null for the free cell)
-  const canonicalFullToItem = [];
-  {
-    let ci = 0;
-    for (let i = 0; i < total; i++) {
-      if (freeIndex !== null && i === freeIndex) canonicalFullToItem.push(null);
-      else { canonicalFullToItem.push(ci); ci++; }
-    }
-  }
-  function tally(cellSet) {
-    let becky = 0, sam = 0;
-    cellSet.forEach(fullIdx => {
-      const canonical = canonicalFullToItem[fullIdx];
-      if (canonical === null) return;
-      const owner = owners[canonical];
-      if (owner === "becky") becky++;
-      else if (owner === "sam") sam++;
-    });
-    return { becky, sam };
-  }
-  function leaderLabel(counts) {
-    if (counts.becky > counts.sam) return "🔴 Becky";
-    if (counts.sam > counts.becky) return "🔵 Sam";
-    return "Tied";
-  }
-
-  // which canonical ITEMS (not grid positions) are part of a completed line —
-  // used to highlight the right squares no matter where they land in this profile's shuffle
-  const winItemIndices = new Set(
-    [...canonicalWinCells].map(fullIdx => canonicalFullToItem[fullIdx]).filter(v => v !== null)
-  );
-
-  let rowBannerHtml = "";
-  if (hasRow) {
-    const c = tally(rowCells);
-    rowBannerHtml = `
+  // Each secret is tied to a specific canonical item — position-independent, so it works
+  // the same regardless of which profile's shuffled layout is on screen.
+  const secretItemIndices = new Set(dest.secrets.map(s => s.idx));
+  const secretBannersHtml = dest.secrets.map(s => {
+    const owner = owners[s.idx];
+    if (!owner) return "";
+    const finderLabel = owner === "becky" ? "🔴 Becky" : "🔵 Sam";
+    return `
       <div class="bingo-banner show">
-        <div class="bb-title">★ Row! ★ ${leaderLabel(c)} leads (${c.becky}-${c.sam})</div>
-        <div class="bb-text">${dest.hLinePrize}</div>
+        <div class="bb-title">🤫 Secret! ★ ${finderLabel} found it</div>
+        <div class="bb-text">${s.prize}</div>
       </div>`;
-  }
-  let colBannerHtml = "";
-  if (hasCol) {
-    const c = tally(colCells);
-    colBannerHtml = `
-      <div class="bingo-banner show">
-        <div class="bb-title">★ Column! ★ ${leaderLabel(c)} leads (${c.becky}-${c.sam})</div>
-        <div class="bb-text">${dest.vLinePrize}</div>
-      </div>`;
-  }
+  }).join("");
+
   let winnerLabel = "";
   if (decided) {
     winnerLabel = beckyCount > samCount ? "🔴 Becky wins!" : samCount > beckyCount ? "🔵 Sam wins!" : "It's a tie!";
@@ -648,8 +628,7 @@ function render() {
     <div class="eyebrow">${dest.dates} · Tapping as ${profileLabel}</div>
     <h1>${dest.name}</h1>
     <span class="route">${dest.route}</span>
-    ${rowBannerHtml}
-    ${colBannerHtml}
+    ${secretBannersHtml}
     <div class="grid" id="grid" style="grid-template-columns:repeat(${size},1fr)"></div>
     <div class="prize ${decided ? 'show' : ''}">
       <div class="prize-title">${prizeTitle}</div>
@@ -668,7 +647,7 @@ function render() {
       const owner = owners[canonicalIdx];
       const ownerClass = owner ? ` owner-${owner}` : "";
       const blockedClass = (owner && owner !== activeProfile) ? " blocked" : "";
-      el.className = "cell" + ownerClass + blockedClass + (winItemIndices.has(canonicalIdx) ? " win" : "");
+      el.className = "cell" + ownerClass + blockedClass + ((secretItemIndices.has(canonicalIdx) && owner) ? " win" : "");
       el.textContent = dest.items[canonicalIdx];
       el.onclick = () => {
         const current = state[dest.id][canonicalIdx];
